@@ -1,0 +1,99 @@
+
+__use_ssh_agent() {
+    local agent_name="$1"
+    local agent_list_file="${2:-~/.ssh/agent_list}"
+    local agent_pid=""
+
+    agent_list_file=${agent_list_file/#\~/$HOME}
+
+    __disuse_ssh_agent
+    if [ ! -f "$agent_list_file" ]; then
+        echo "Agent list file '$agent_list_file' does not exist"
+        return 1
+    fi
+
+    local lockfd
+    exec {lockfd}>>"$agent_list_file" && flock -n "$lockfd"
+    if [ $? -ne 0 ]; then
+        exec {lockfd}>&- || true
+        echo "Agent list file '$agent_list_file' could not been locked"
+        return 1
+    fi
+
+    local registered=$(sed -n "s%^AGENT:$agent_name:\([0-9]\+\):\(.*\)$%\1:\2% p" "$agent_list_file")
+    if [ ! -z "$registered" ]; then
+        local registered_agent_pid=$(echo "$registered" | cut -d ':' -f 1)
+        local registered_sock_file=$(echo "$registered" | cut -d ':' -f 2)
+
+        local agent_pid=$(pgrep -u $(id -u) ssh-agent | grep "$registered_agent_pid")
+    fi
+
+    if [ -z "$agent_pid" ]; then
+        eval $(ssh-agent -s)
+
+        if [ -z "$registered_agent_pid" ]; then
+            # new
+            echo "AGENT:$agent_name:$SSH_AGENT_PID:$SSH_AUTH_SOCK" >> "$agent_list_file"
+        else
+            # replace
+            sed -i "s%^AGENT:$agent_name:\([0-9]\+\):\(.*\)$%AGENT:$agent_name:$SSH_AGENT_PID:$SSH_AUTH_SOCK%" "$agent_list_file"
+        fi
+    else
+        SSH_AGENT_PID="$registered_agent_pid"
+        SSH_AUTH_SOCK="$registered_sock_file"
+    fi
+
+    SSH_AGENT_NAME="$agent_name"
+    flock -u $lockfd
+    exec {lockfd}>&- || true
+
+    ssh-add -l
+}
+
+__disuse_ssh_agent() {
+    if [ ! -z "$SSH_AGENT_PID" ]; then
+        SSH_AGENT_PID=
+    fi
+
+    if [ ! -z "$SSH_AUTH_SOCK" ]; then
+        SSH_AUTH_SOCK=
+    fi
+
+    if [ ! -z "$SSH_AGENT_NAME" ]; then
+        SSH_AGENT_NAME=
+    fi
+}
+
+if [[ $_ = $0 ]]; then
+    echo "You need to source the script:"
+    echo "  $ . $0"
+else
+    __my_name="$(basename ${BASH_SOURCE[0]})"
+    case "$1" in
+        "use")
+            if [ $# -ne 2 -a $# -ne 3 ]; then
+                echo "Usage: $__my_name use <agent-name> [<agent-list-file>]"
+            else
+                __use_ssh_agent "$2" $3
+            fi
+            ;;
+        "disuse")
+            if [ $# -ne 1 ]; then
+                echo "Usage: $__my_name disuse"
+            else
+                __disuse_ssh_agent
+            fi
+            ;;
+        *)
+            echo "Usage: $__my_name use <agent-name>"
+            echo "  Use the given agent, start it if needed."
+
+            echo "Usage: $__my_name disuse"
+            echo "  Stop using the given agent if any (the agent will still be alive)."
+            ;;
+    esac
+fi
+
+unset -f __use_ssh_agent
+unset -f __disuse_ssh_agent
+unset -v __my_name
