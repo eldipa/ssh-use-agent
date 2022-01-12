@@ -64,6 +64,10 @@ __disuse_ssh_agent() {
     fi
 }
 
+__current_ssh_agent() {
+    echo "$SSH_AGENT_NAME"
+}
+
 if [[ $_ = $0 ]]; then
     echo "You need to source the script:"
     echo "  $ . $0"
@@ -84,6 +88,13 @@ else
                 __disuse_ssh_agent
             fi
             ;;
+        "current")
+            if [ $# -ne 1 ]; then
+                echo "Usage: $__my_name current"
+            else
+                __current_ssh_agent
+            fi
+            ;;
         *)
             echo "Usage: $__my_name use <agent-name>"
             echo "  Use the given agent, start it if needed."
@@ -96,4 +107,5 @@ fi
 
 unset -f __use_ssh_agent
 unset -f __disuse_ssh_agent
+unset -f __current_ssh_agent
 unset -v __my_name
