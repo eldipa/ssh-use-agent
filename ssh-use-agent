@@ -65,7 +65,7 @@ __disuse_ssh_agent() {
 }
 
 __list_ssh_agent() {
-    local agent_list_file="${2:-~/.ssh/agent_list}"
+    local agent_list_file="${1:-~/.ssh/agent_list}"
     agent_list_file=${agent_list_file/#\~/$HOME}
 
     echo "Agents availables are :"
@@ -94,10 +94,10 @@ else
             ;;
 
         "list")
-            if [ $# -ne 1 ]; then
-                echo "Usage: $__my_name list"
+            if [ $# -ne 1 -a $# -ne 2 ]; then
+                echo "Usage: $__my_name list [<agent-list-file>]"
             else
-                __list_ssh_agent
+                __list_ssh_agent "$2"
             fi
             ;;
 
