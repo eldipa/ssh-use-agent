@@ -1,0 +1,15 @@
+Source: ssh-use-agent 
+Section: admin
+Priority: optional
+Maintainer: Camille Lafitte <cam.lafit@azerttyu.net>
+Build-Depends: debhelper (>= 9),
+               devscripts,
+               git
+Standards-Version: 3.9.8
+
+Package: ssh-use-agent 
+Architecture: all
+Description: Use multiple ssh agent
+ .
+ More information at https://github.com/eldipa/ssh-use-agent
+Homepage: https://github.com/eldipa/ssh-use-agent

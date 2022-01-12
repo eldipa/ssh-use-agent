@@ -1,0 +1,5 @@
+ssh-use-agent (0.0.1) stable; urgency=low
+
+  * Enable debianization project
+
+ -- Camille Lafitte <cam.lafit@azerttyu.net>  Wed, 12 Jan 2022 10:22:00 +0200
