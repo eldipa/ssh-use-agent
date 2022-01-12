@@ -51,6 +51,11 @@ $ echo $SSH_AUTH_SOCK
 /tmp/<...>
 ```
 
+To list all agents available you can run :
+```shell
+$ ssh-use-agent list
+```
+
 To load a key into the current ``ssh-agent``, run ``ssh-add`` as usual:
 
 ```shell

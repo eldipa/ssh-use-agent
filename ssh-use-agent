@@ -1,10 +1,16 @@
 
+__get_agent_list_path() {
+    local agent_list_file="${1:-~/.ssh/agent_list}"
+    agent_list_file=${agent_list_file/#\~/$HOME}
+
+    echo "$agent_list_file"
+}
+
 __use_ssh_agent() {
     local agent_name="$1"
-    local agent_list_file="${2:-~/.ssh/agent_list}"
     local agent_pid=""
 
-    agent_list_file=${agent_list_file/#\~/$HOME}
+    local agent_list_file=$(__get_agent_list_path "$2")
 
     __disuse_ssh_agent
     if [ ! -f "$agent_list_file" ]; then
@@ -64,6 +70,13 @@ __disuse_ssh_agent() {
     fi
 }
 
+__list_ssh_agent() {
+    local agent_list_file=$(__get_agent_list_path "$2")
+
+    echo "Agents availables are :"
+    sed -n "s%^AGENT:\([^:]*\):.*%  \1% p" "$agent_list_file"
+}
+
 if [[ $_ = $0 ]]; then
     echo "You need to source the script:"
     echo "  $ . $0"
@@ -84,6 +97,15 @@ else
                 __disuse_ssh_agent
             fi
             ;;
+
+        "list")
+            if [ $# -ne 1 -a $# -ne 2 ]; then
+                echo "Usage: $__my_name list [<agent-list-file>]"
+            else
+                __list_ssh_agent "$2"
+            fi
+            ;;
+
         *)
             echo "Usage: $__my_name use <agent-name>"
             echo "  Use the given agent, start it if needed."
@@ -96,4 +118,5 @@ fi
 
 unset -f __use_ssh_agent
 unset -f __disuse_ssh_agent
+unset -f __list_ssh_agent
 unset -v __my_name
