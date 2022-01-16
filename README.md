@@ -41,6 +41,12 @@ be created *without* any key loaded.
 To know which ``ssh-agent`` is loaded in the current shell run:
 
 ```shell
+$ ssh-use-agent current
+<cool-name>
+```
+In other way you could retrieve also information as this :
+
+```shell
 $ echo $SSH_AGENT_NAME
 <cool-name>
 
